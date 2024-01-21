@@ -103,6 +103,13 @@ chmod +x /opt/palworld/update-palworld.sh
 chown palworld:palworld /opt/palworld/update-palworld.sh
 echo "0 */3 * * * /opt/palworld/update-palworld.sh" | crontab -u palworld -
 
+# /swapfile の作成
+fallocate -l 16G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon -p 10 /swapfile
+echo '/swapfile none swap sw,pri=10 0 0' | tee -a /etc/fstab
+
 # palworld-dedicated.service サーバプロセスを起動
 sudo systemctl start palworld-dedicated.service
 
