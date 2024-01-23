@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # setup-palworld_remove-valheim.sh をダウンロード
-curl -LO https://raw.githubusercontent.com/palsoku/Palworld-ConoHaVPS/main/setup-palworld.sh
+curl -LO https://raw.githubusercontent.com/palsoku/Palworld-ConoHaVPS/main/setup-palworld-template.sh
 
 # ダウンロードしたスクリプトに実行権限を付与
-chmod +x setup-palworld.sh
+chmod +x setup-palworld-template.sh
 
 # スクリプトをバックグラウンドで実行
-./setup-palworld.sh &
+./setup-palworld-template.sh &
