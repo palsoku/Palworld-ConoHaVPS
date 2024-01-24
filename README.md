@@ -10,7 +10,7 @@ ConoHa VPS のスタートアップスクリプトは一定時間以内に正常
 startup-palworld.sh ではセットアップを行う [setup-palworld_remove-valheim.sh](./setup-palworld_remove-valheim.sh) をダウンロードしてバックグランド実行し、早急に正常終了を返す役割を担っています。
 
 利用方法はこちらの記事をご確認ください。
-* [誰でも簡単にできる最大32人パルワールド専用サーバの建て方 (ConoHa for GAME) | パル速 -パルワールド速報-](https://palsoku.jp/tips/easy-palworld-server-conoha/)
+* [【親切自動設定付き】パルワールドサーバーの建て方【ConoHa for GAME】](https://palsoku.jp/tips/palworld-server-conoha/)
 
 
 下にいくほどアップデートされています
