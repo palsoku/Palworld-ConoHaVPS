@@ -21,8 +21,26 @@ systemctl restart sshd
 # palworld ユーザーにsudo NOPASSWD:ALL 権限を付与
 echo "palworld ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/palworld
 
+# Install rcon_cli in /usr/games/rcon
+curl -LO https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz
+tar -xvzf rcon-0.10.3-amd64_linux.tar.gz
+mv rcon-0.10.3-amd64_linux/rcon /usr/games/
+rm -rf rcon-0.10.3-amd64_linux rcon-0.10.3-amd64_linux.tar.gz
+
+# palworld-server.service のインストール完了まで待機
+count=0
+max_count=360  # 30分まで
+while ! systemctl status palworld-server.service | grep -q "active (running)"; do
+    if [ $count -ge $max_count ]; then
+        echo "palworld-server.service did not become active within the expected time."
+        exit 1
+    fi
+    sleep 5
+    ((count++))
+done
+
 # サーバー停止
-sysyemctl stop palworld-server.service
+sleep 10; sysyemctl stop palworld-server.service
 
 # サーバプロセス起動サービス palworld-server.service ファイルに -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS を付与
 sed -i '/^ExecStart=\/opt\/palworld\/PalServer\.sh port=8211$/c\ExecStart=/opt/palworld/PalServer.sh port=8211 -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS' /etc/systemd/system/palworld-server.service
@@ -30,15 +48,8 @@ sed -i '/^ExecStart=\/opt\/palworld\/PalServer\.sh port=8211$/c\ExecStart=/opt/p
 # Initial Palworld AdminPassword 反映
 cp -f /opt/palworld/DefaultPalWorldSettings.ini /opt/palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
 sed -i 's/AdminPassword="[^"]*"/AdminPassword="'$ADMIN_PASSWORD'"/' /opt/palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
-
 # RCONEnabled
 sed -i 's/RCONEnabled=False/RCONEnabled=True/' /opt/palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
-
-# Install rcon_cli in /usr/games/rcon
-curl -LO https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz
-tar -xvzf rcon-0.10.3-amd64_linux.tar.gz
-mv rcon-0.10.3-amd64_linux/rcon /usr/games/
-rm -rf rcon-0.10.3-amd64_linux rcon-0.10.3-amd64_linux.tar.gz
 
 # 自動アップデートスクリプト update-palworld.sh 作成
 cat <<EOF > /opt/palworld/update-palworld.sh
