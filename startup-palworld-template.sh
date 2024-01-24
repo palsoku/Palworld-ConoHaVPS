@@ -8,4 +8,4 @@ chmod +x setup-palworld-template.sh
 
 # スクリプトをバックグラウンドで実行
 /usr/bin/date >> /setup.log
-./setup-palworld-template.sh >> /setup.log 2>&1
+./setup-palworld-template.sh >> /setup.log 2>&1 &
