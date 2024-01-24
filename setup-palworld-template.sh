@@ -1,7 +1,5 @@
 #!/bin/bash
 
-/usr/bin/date
-
 # Initial Palworld AdminPassword 作成
 ADMIN_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c8)
 
@@ -103,5 +101,3 @@ echo '/swapfile none swap sw,pri=10 0 0' | tee -a /etc/fstab
 # palworld-server.service サーバプロセスを起動
 systemctl daemon-reload
 systemctl start palworld-server.service
-
-/usr/bin/date
