@@ -40,7 +40,7 @@ while ! systemctl status palworld-server.service | grep -q "active (running)"; d
 done
 
 # サーバー停止
-sleep 10; sysyemctl stop palworld-server.service
+sleep 10; systemctl stop palworld-server.service
 
 # サーバプロセス起動サービス palworld-server.service ファイルに -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS を付与
 sed -i '/^ExecStart=\/opt\/palworld\/PalServer\.sh port=8211$/c\ExecStart=/opt/palworld/PalServer.sh port=8211 -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS' /etc/systemd/system/palworld-server.service
