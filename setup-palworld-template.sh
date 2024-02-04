@@ -50,42 +50,61 @@ sed -i 's/AdminPassword="[^"]*"/AdminPassword="'$ADMIN_PASSWORD'"/' /opt/palworl
 sed -i 's/RCONEnabled=False/RCONEnabled=True/' /opt/palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
 
 # 自動アップデートスクリプト update-palworld.sh 作成
-cat <<EOF > /opt/palworld/update-palworld.sh
-#!/bin/sh
+apt install -y jq
 
-# Steam CMD path
+cat <<EOF | sudo tee /opt/palworld/update-palworld.sh > /dev/null
+#!/bin/bash
+
+# Paths
 Steamcmd="/usr/games/steamcmd"
-Rconcmd="/usr/games/rcon"
+rcon_cli="/usr/games/rcon"
 install_dir="/opt/palworld/"
+service_name="palworld-dedicated.service"
 
-echo "# Check the environment."
+echo "# Environment Check"
 date
+
+# Retrieve the current Build ID
 OLD_Build=\`\$Steamcmd +force_install_dir \$install_dir +login anonymous +app_status 2394010 +quit | grep -e "BuildID" | awk '{print \$8}'\`
-echo "Old BuildID: \$OLD_Build"
+echo "Current BuildID: \$OLD_Build"
 
-echo "# Start updating the game server..."
-\$Steamcmd +force_install_dir \$install_dir +login anonymous +app_update 2394010 validate +quit > /dev/null
+# Attempt to fetch the New Build ID using curl
+NEW_Build=\$(curl -s https://api.steamcmd.net/v1/info/2394010 | jq -r '.data["2394010"].depots.branches.public.buildid')
 
-echo "# Check the environment after the update."
-NEW_Build=\`\$Steamcmd +force_install_dir \$install_dir +login anonymous +app_status 2394010 +quit | grep -e "BuildID" | awk '{print \$8}'\`
-echo "New BuildID: \$NEW_Build"
+# Fallback to SteamCMD method if curl fails to retrieve data
+if [ -z "\$NEW_Build" ] || [ "\$NEW_Build" = "null" ]; then
+    echo "Failed to fetch New BuildID with curl. Resorting to SteamCMD."
+    \$Steamcmd +force_install_dir \$install_dir +login anonymous +app_update 2394010 validate +quit > /dev/null
+    NEW_Build=\`\$Steamcmd +force_install_dir \$install_dir +login anonymous +app_status 2394010 +quit | grep -e "BuildID" | awk '{print \$8}'\`
+fi
 
-# Check if updated.
-if [ \$OLD_Build = \$NEW_Build ]; then
-    echo "Build number matches."
+echo "Fetched New BuildID: \$NEW_Build"
+
+# Update the server if the Build IDs do not match
+if [ "\$OLD_Build" = "\$NEW_Build" ]; then
+    echo "No update required. Build numbers are identical."
 else
-    echo "Restart palworld-server.service because an game update exists."
-    \$Rconcmd -a "127.0.0.1:25575" -p \$ADMIN_PASSWORD "Broadcast The-server-will-restart-in-60-seconds.Please-prepare-to-exit-the-game."
-    sleep 60; sudo systemctl stop palworld-server.service
-    sudo systemctl start palworld-server.service
-    systemctl status palworld-server.service
+    echo "# Updating the game server..."
+    \$Steamcmd +force_install_dir \$install_dir +login anonymous +app_update 2394010 validate +quit > /dev/null
+    echo "Game server updated successfully to BuildID: \$NEW_Build"
+
+    echo "Initiating \${service_name} restart due to an update."
+    \${rcon_cli} -a "127.0.0.1:25575" -p $ADMIN_PASSWORD "Broadcast The-server-will-restart-in-60-seconds.Please-prepare-to-exit-the-game."
+    sleep 30
+    \${rcon_cli} -a "127.0.0.1:25575" -p $ADMIN_PASSWORD "Broadcast The-server-will-restart-in-30-seconds.Please-prepare-to-exit-the-game."
+    sleep 20
+    \${rcon_cli} -a "127.0.0.1:25575" -p $ADMIN_PASSWORD "Broadcast The-server-will-restart-in-10-seconds.Please-prepare-to-exit-the-game."
+    sleep 10
+    sudo systemctl stop \$service_name
+    sudo systemctl start \$service_name
+    systemctl status \$service_name
 fi
 EOF
 
 # update-palworld.sh の自動実行登録
 chmod +x /opt/palworld/update-palworld.sh
 chown palworld:palworld /opt/palworld/update-palworld.sh
-echo "0 */3 * * * /opt/palworld/update-palworld.sh" | crontab -u palworld -
+echo "*/30 * * * * /opt/palworld/update-palworld.sh" | crontab -u palworld -
 
 # swapfile を16GBで割り当て直し
 swapoff /swap.img
