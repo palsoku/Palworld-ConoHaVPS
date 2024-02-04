@@ -59,7 +59,7 @@ cat <<EOF | sudo tee /opt/palworld/update-palworld.sh > /dev/null
 Steamcmd="/usr/games/steamcmd"
 rcon_cli="/usr/games/rcon"
 install_dir="/opt/palworld/"
-service_name="palworld-dedicated.service"
+service_name="palworld-server.service"
 
 echo "# Environment Check"
 date
